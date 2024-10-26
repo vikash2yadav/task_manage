@@ -2,10 +2,14 @@ import { sendToken } from "../dotenv/features.js";
 import { TryCatch } from "../middlewares/error.js";
 import { User } from "../models/users.js";
 import { ErrorHandler } from "../dotenv/utility.js";
-import { compare } from "bcrypt";
+import { hash, compare } from "bcrypt";
 
-const newUser = async (req, res) => {
+const newUser = async (req, res, next) => {
   const { name, email, password } = req.body;
+
+  const existUser = await User.findOne({ email });
+
+  if (existUser) return next(new ErrorHandler("Email exists", 504));
 
   //   const file = req.file;
 
@@ -16,26 +20,27 @@ const newUser = async (req, res) => {
   //     url: "asds",
   //   };
 
+  const hashedPassword = await hash(password, 10);
+
   const user = await User.create({
     name,
     email,
-    password,
+    password: hashedPassword,
   });
 
-  sendToken(res, user, 201, "User Created");
+  sendToken(res, user, 200, "User Created");
 };
 
 const login = TryCatch(async (req, res, next) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email });
 
-  if (!user) return next(new ErrorHandler("Invalid email or Password", 404));
+  if (!user) return next(new ErrorHandler("Invalid email", 404));
 
   const isMatch = await compare(password, user.password);
 
-  if (!isMatch)
-    return next(new ErrorHandler("Invalid email or Password", 404));
+  if (!isMatch) return next(new ErrorHandler("Invalid Password", 404));
 
   sendToken(res, user, 200, `Welcome Back, ${user.name}`);
 });
@@ -61,9 +66,4 @@ const logout = TryCatch(async (req, res) => {
     });
 });
 
-export {
-  login,
-  newUser,
-  getMyProfile,
-  logout,
-};
+export { login, newUser, getMyProfile, logout };

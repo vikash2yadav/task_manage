@@ -12,19 +12,58 @@ import {
 } from "@mui/material";
 import CameraAlt from "@mui/icons-material/CameraAlt";
 import { VisuallyHiddenInput } from "../../components/styles/styledComponents";
-import { useInputValidation } from "6pp";
+import { useFileHandler, useInputValidation } from "6pp";
 import { emailValidator } from "../../utils/validators.js";
+import { newUserApi, loginApi } from "../../apis/users.js";
+import { toast } from "react-hot-toast";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
 
   const email = useInputValidation("", emailValidator);
   const password = useInputValidation("");
+  const name = useInputValidation("");
 
-  const handleLogin = async () => {
-    
-  }
+  const avtar = useFileHandler("single");
 
+  const handleLogin = async (emailValue, passwordValue) => {
+    try {
+      let response = await loginApi(`user/login`, {
+        email: emailValue,
+        password: passwordValue,
+      });
+
+      if (response?.status === 200) {
+        toast.success(response?.data?.message);
+      } else {
+        toast.error(response?.data?.message);
+      }
+    } catch (error) {
+      toast.error("Login failed!");
+    }
+  };
+
+  const handleRegister = async (nameValue, emailValue, passwordValue) => {
+    try {
+      let response = await newUserApi(`user/new`, {
+        name: nameValue,
+        email: emailValue,
+        password: passwordValue,
+      });
+
+      if (response?.status === 200) {
+        toast.success(response?.data?.message);
+        setTimeout(() => {
+          setIsLogin(true);
+        }, 500);
+      }else{
+        console.log(response)
+        toast.error(response?.data);
+      }
+    } catch (error) {
+      toast.error("Registration failed!");
+    }
+  };
   return (
     <div
       style={{
@@ -49,6 +88,7 @@ const Login = () => {
             flexDirection: "column",
             alignItems: "center",
             backgroundColor: "#f0f0f0",
+            borderRadius: "10px 50px",
           }}
         >
           {isLogin ? (
@@ -59,7 +99,10 @@ const Login = () => {
                   width: "100%",
                   marginTop: "1rem",
                 }}
-                onSubmit={handleLogin}
+                onSubmit={(e) => {
+                  handleLogin(email?.value, password?.value);
+                  e.preventDefault();
+                }}
               >
                 <TextField
                   fullWidth
@@ -70,6 +113,9 @@ const Login = () => {
                   value={email.value}
                   onChange={email.changeHandler}
                   onBlur={email.changeHandler}
+                  InputProps={{
+                    style: { borderRadius: "10px", height: "50px" },
+                  }}
                 />
                 {email.error && (
                   <Typography color="error" variant="caption">
@@ -77,6 +123,7 @@ const Login = () => {
                   </Typography>
                 )}
                 <TextField
+                  required
                   fullWidth
                   label="Password"
                   type="password"
@@ -86,6 +133,9 @@ const Login = () => {
                   value={password.value}
                   onChange={password.changeHandler}
                   onBlur={password.changeHandler}
+                  InputProps={{
+                    style: { borderRadius: "10px", height: "50px" },
+                  }}
                 />
                 <Button
                   fullWidth
@@ -100,14 +150,16 @@ const Login = () => {
                   Continue
                 </Button>
                 <Typography textAlign="center" m={"1rem"}>
-                  <hr />
+                  {/* <hr /> */}
                 </Typography>
                 <Button
                   sx={{ marginTop: "1rem" }}
                   fullWidth
                   variant="text"
                   color="secondary"
-                  onClick={() => setIsLogin(false)}
+                  onClick={() => {
+                    setIsLogin(false);
+                  }}
                 >
                   Sign Up
                 </Button>
@@ -121,29 +173,38 @@ const Login = () => {
                   width: "100%",
                   marginTop: "1rem",
                 }}
-                onSubmit={""}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleRegister(name?.value, email?.value, password?.value);
+                }}
               >
-                <Stack position={"relative"} width={"8rem"} margin={"auto"}>
+                <Stack
+                  position={"relative"}
+                  width={{
+                    xs: "6rem",
+                    sm: "8rem",
+                  }}
+                  margin={"auto"}
+                >
                   <Avatar
                     sx={{
-                      width: "8rem",
-                      height: "8rem",
+                      width: { xs: "6rem", sm: "8rem" },
+                      height: { xs: "6rem", sm: "8rem" },
                       objectFit: "contain",
                     }}
-                    //   src={avtar.preview}
+                    src={avtar?.preview}
                   />
-                  {"avtar.error" && (
-                    <></>
-                    // <Typography
-                    //   m={"1rem"}
-                    //   width={"fit-content"}
-                    //   display={"block"}
-                    //   color="error"
-                    //   variant="caption"
-                    // >
-                    //   {/* {avtar.error} */}
-                    // </Typography>
-                  )}
+                  {/* {avtar.error && (
+                    <Typography
+                      m={"1rem"}
+                      width={"fit-content"}
+                      display={"block"}
+                      color="error"
+                      variant="caption"
+                    >
+                      {avtar.error}
+                    </Typography>
+                  )} */}
                   <IconButton
                     component="label"
                     sx={{
@@ -167,28 +228,42 @@ const Login = () => {
                   </IconButton>
                 </Stack>
                 <TextField
+                  required
                   fullWidth
                   label="Name"
                   margin="normal"
                   variant="outlined"
                   color="secondary"
-                  // value={name.value}
-                  // onChange={name.changeHandler}
+                  value={name.value}
+                  onChange={name.changeHandler}
+                  onBlur={name.changeHandler}
+                  InputProps={{
+                    style: { borderRadius: "10px", height: "50px" },
+                  }}
                 />
+                {name.error && (
+                  <Typography color="error" variant="caption">
+                    {name.error}
+                  </Typography>
+                )}
                 <TextField
                   fullWidth
-                  label="Username"
+                  label="Email"
                   margin="normal"
                   variant="outlined"
                   color="secondary"
-                  // value={username.value}
-                  // onChange={username.changeHandler}
+                  value={email.value}
+                  onChange={email.changeHandler}
+                  onBlur={email.changeHandler}
+                  InputProps={{
+                    style: { borderRadius: "10px", height: "50px" },
+                  }}
                 />
-                {/* {username.error && (
-            <Typography color="error" variant="caption">
-              {username.error}
-            </Typography>
-          )} */}
+                {email.error && (
+                  <Typography color="error" variant="caption">
+                    {email.error}
+                  </Typography>
+                )}
                 <TextField
                   required
                   fullWidth
@@ -197,15 +272,23 @@ const Login = () => {
                   margin="normal"
                   variant="outlined"
                   color="secondary"
-                  // value={password.value}
-                  // onChange={password.changeHandler}
+                  value={password.value}
+                  onChange={password.changeHandler}
+                  onBlur={password.changeHandler}
+                  InputProps={{
+                    style: { borderRadius: "10px", height: "50px" },
+                  }}
                 />
+                {password.error && (
+                  <Typography color="error" variant="caption">
+                    {password.error}
+                  </Typography>
+                )}
                 <Button
                   fullWidth
                   variant="contained"
                   color="secondary"
                   type="submit"
-                  onClick={() => {}}
                   sx={{
                     borderRadius: "10px",
                     marginTop: "20px",
@@ -214,14 +297,16 @@ const Login = () => {
                   Continue
                 </Button>
                 <Typography textAlign="center" m={"1rem"}>
-                  <hr />
+                  {/* <hr /> */}
                 </Typography>
                 <Button
                   sx={{ marginTop: "1rem" }}
                   fullWidth
                   variant="text"
                   color="secondary"
-                  onClick={() => setIsLogin(true)}
+                  onClick={() => {
+                    setIsLogin(true);
+                  }}
                 >
                   Login
                 </Button>

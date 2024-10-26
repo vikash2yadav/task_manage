@@ -1,14 +1,18 @@
-import React from "react";
+import React, { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
-import Login from "./page/auth/Login";
-import './App.css';
+import "./App.css";
+import { Toaster } from "react-hot-toast";
+
+const Login = lazy(() => import("./page/auth/Login"));
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/login" element={<Login/>}></Route>
-      <Route path="/register" element={<>register</>}></Route>
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={<Login />}></Route>
+      </Routes>
+      <Toaster position="top-right" reverseOrder={false} />
+    </>
   );
 };
 
