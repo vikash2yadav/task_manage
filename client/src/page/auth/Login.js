@@ -16,8 +16,10 @@ import { useFileHandler, useInputValidation } from "6pp";
 import { emailValidator } from "../../utils/validators.js";
 import { newUserApi, loginApi } from "../../apis/users.js";
 import { toast } from "react-hot-toast";
+import {useNavigate} from 'react-router-dom'
 
 const Login = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
 
   const email = useInputValidation("", emailValidator);
@@ -35,6 +37,7 @@ const Login = () => {
 
       if (response?.status === 200) {
         toast.success(response?.data?.message);
+        navigate("/dashboard");
       } else {
         toast.error(response?.data?.message);
       }
