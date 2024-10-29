@@ -10,15 +10,11 @@ const schema = new Schema(
       type: String,
       required: true,
     },
-    subTitle: {
-      type: String,
-      required: true,
-    },
     description: {
       type: String,
       required: true,
     },
-    price: {
+    amount: {
       type: String,
       require: true,
     },

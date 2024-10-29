@@ -14,7 +14,7 @@ const schema = new Schema(
       type: String,
       required: true,
     },
-    price: {
+    amount: {
       type: String,
       require: true,
     },

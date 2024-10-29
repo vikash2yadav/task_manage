@@ -5,7 +5,7 @@ import { Toaster } from "react-hot-toast";
 
 const Login = lazy(() => import("./page/auth/Login"));
 const Dashboard = lazy(() => import("./page/Dashboard"));
-const Form = lazy(() => import("./page/Form"));
+const NotFound = lazy(()=> import("./page/NotFound"));
 
 const App = () => {
   return (
@@ -13,7 +13,7 @@ const App = () => {
       <Routes>
         <Route path="/login" element={<Login />}></Route>
         <Route path="/dashboard" element={<Dashboard />}></Route>
-        <Route path="/dashboard/add/:module" element={<Form />}></Route>
+        <Route path="/*" element={<NotFound />}></Route>
       </Routes>
       <Toaster position="top-right" reverseOrder={false} />
     </>

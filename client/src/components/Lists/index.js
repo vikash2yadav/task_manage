@@ -13,16 +13,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { Box, Tooltip } from "@mui/material";
 import { CommonContext } from "../../context/CommonContext";
 
-export default function Lists({ data }) {
+export default function Lists({ data , handleEditOpen, handleDelete}) {
   const { type } = React.useContext(CommonContext);
-
-  const handleEdit = (id) => {
-    console.log(`Edit item with id: ${id}`);
-  };
-
-  const handleDelete = (id) => {
-    console.log(`Delete item with id: ${id}`);
-  };
 
   return (
     <List sx={{ width: "100%", bgcolor: "background.paper" }}>
@@ -70,7 +62,7 @@ export default function Lists({ data }) {
                   <IconButton
                     edge="end"
                     aria-label="edit"
-                    onClick={() => handleEdit(item.id)}
+                    onClick={() => handleEditOpen(item._id)}
                     sx={{ padding: "10px" }}
                   >
                     <EditIcon />
@@ -81,7 +73,7 @@ export default function Lists({ data }) {
                   <IconButton
                     edge="end"
                     aria-label="delete"
-                    onClick={() => handleDelete(item.id)}
+                    onClick={() => handleDelete(item._id)}
                     sx={{ padding: "10px", marginLeft: { xs: 0, sm: 1 } }}
                   >
                     <DeleteIcon />
@@ -94,7 +86,7 @@ export default function Lists({ data }) {
                 <Tooltip title="Edit">
                   <IconButton
                     aria-label="edit"
-                    onClick={() => handleEdit(item.id)}
+                    onClick={() => handleEditOpen(item.id)}
                     sx={{ padding: "10px", marginRight: 1 }}
                   >
                     <EditIcon />
