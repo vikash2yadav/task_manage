@@ -1,7 +1,7 @@
 import { sendToken } from "../dotenv/features.js";
 import { TryCatch } from "../middlewares/error.js";
 import { User } from "../models/users.js";
-import { ErrorHandler } from "../dotenv/utility.js";
+// import { ErrorHandler } from "../dotenv/utility.js";
 import { hash, compare } from "bcrypt";
 
 const newUser = async (req, res, next) => {
@@ -24,7 +24,7 @@ const newUser = async (req, res, next) => {
   }
   const existUser = await User.findOne({ email });
 
-  if (existUser) return next(new ErrorHandler("Email exists", 504));
+  // if (existUser) return next(new ErrorHandler("Email exists", 504));
 
   //   const file = req.file;
 
@@ -51,11 +51,11 @@ const login = TryCatch(async (req, res, next) => {
 
   const user = await User.findOne({ email });
 
-  if (!user) return next(new ErrorHandler("Invalid email", 404));
+  // if (!user) return next(new ErrorHandler("Invalid email", 404));
 
   const isMatch = await compare(password, user.password);
 
-  if (!isMatch) return next(new ErrorHandler("Invalid Password", 404));
+  // if (!isMatch) return next(new ErrorHandler("Invalid Password", 404));
 
   sendToken(res, user, 200, `Welcome Back, ${user.name}`);
 });
@@ -63,7 +63,7 @@ const login = TryCatch(async (req, res, next) => {
 const getMyProfile = TryCatch(async (req, res, next) => {
   const user = await User.findById(req.user);
 
-  if (!user) return next(new ErrorHandler("User not found", 404));
+  // if (!user) return next(new ErrorHandler("User not found", 404));
 
   res.status(200).json({
     success: true,
