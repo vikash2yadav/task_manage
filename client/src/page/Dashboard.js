@@ -411,7 +411,7 @@ const Dashboard = () => {
                 },
                 borderRadius: "1rem",
                 width: "100%",
-                height: "28rem",
+                height: "25rem",
                 overflowY: "auto",
               }}
             >

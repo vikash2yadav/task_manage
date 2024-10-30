@@ -7,6 +7,21 @@ import { hash, compare } from "bcrypt";
 const newUser = async (req, res, next) => {
   const { name, email, password } = req.body;
 
+  if (!name) {
+    return res.status(404).json({
+      message: "Name Not Found",
+    });
+  }
+  if (!email) {
+    return res.status(404).json({
+      message: "Email Not Found",
+    });
+  }
+  if (!password) {
+    return res.status(404).json({
+      message: "Password Not Found",
+    });
+  }
   const existUser = await User.findOne({ email });
 
   if (existUser) return next(new ErrorHandler("Email exists", 504));

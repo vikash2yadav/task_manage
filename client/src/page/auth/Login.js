@@ -35,17 +35,17 @@ const Login = () => {
   const handleLogin = async (emailValue, passwordValue) => {
     setLoading(true);
     try {
-      let response = await loginApi(`user/login`, {
-        email: emailValue,
-        password: passwordValue,
-      });
+        let response = await loginApi(`user/login`, {
+          email: emailValue,
+          password: passwordValue,
+        });
 
-      if (response?.status === 200) {
-        toast.success(response?.data?.message);
-        navigate("/dashboard");
-      } else {
-        toast.error(response?.data?.message);
-      }
+        if (response?.status === 200) {
+          toast.success(response?.data?.message);
+          navigate("/dashboard");
+        } else {
+          toast.error(response?.data?.message);
+        }
     } catch (error) {
       toast.error("Registration failed!");
     } finally {
@@ -56,21 +56,18 @@ const Login = () => {
   const handleRegister = async (nameValue, emailValue, passwordValue) => {
     setLoading(true);
     try {
-      let response = await newUserApi(`user/new`, {
-        name: nameValue,
-        email: emailValue,
-        password: passwordValue,
-      });
+        let response = await newUserApi(`user/new`, {
+          name: nameValue,
+          email: emailValue,
+          password: passwordValue,
+        });
 
-      if (response?.status === 200) {
-        toast.success(response?.data?.message);
-        setTimeout(() => {
-          setIsLogin(true);
-        }, 500);
-      } else {
-        console.log(response);
-        toast.error(response?.data);
-      }
+        if (response?.status === 200) {
+          toast.success(response?.data?.message);
+            setIsLogin(true);
+        } else {
+          toast.error(response?.data);
+        }
     } catch (error) {
       toast.error("Registration failed!");
     } finally {
@@ -125,6 +122,7 @@ const Login = () => {
                   >
                     <TextField
                       fullWidth
+                      required
                       label="Email"
                       margin="normal"
                       variant="outlined"
@@ -271,6 +269,7 @@ const Login = () => {
                     )}
                     <TextField
                       fullWidth
+                      required
                       label="Email"
                       margin="normal"
                       variant="outlined"

@@ -10,15 +10,15 @@ import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
 import IconButton from "@mui/material/IconButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Box, Tooltip } from "@mui/material";
+import { Box, Tooltip, Typography as MuiTypography } from "@mui/material";
 import { CommonContext } from "../../context/CommonContext";
 
-export default function Lists({ data , handleEditOpen, handleDelete}) {
+export default function Lists({ data, handleEditOpen, handleDelete }) {
   const { type } = React.useContext(CommonContext);
 
   return (
     <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-      {data &&
+      {data && data.length > 0 ? (
         data.map((item) => (
           <React.Fragment key={item.id}>
             <ListItem alignItems="flex-start" sx={{ padding: "16px" }}>
@@ -50,7 +50,7 @@ export default function Lists({ data , handleEditOpen, handleDelete}) {
                         marginTop: "0.5rem",
                       }}
                     >
-                      Amount: ₹{item?.amount} {/* Add price here */}
+                      Amount: ₹{item?.amount}
                     </Typography>
                   </React.Fragment>
                 }
@@ -105,7 +105,18 @@ export default function Lists({ data , handleEditOpen, handleDelete}) {
             </ListItem>
             <Divider variant="inset" component="li" />
           </React.Fragment>
-        ))}
+        ))
+      ) : (
+        <ListItem>
+          <ListItemText
+            primary={
+              <MuiTypography variant="h4" sx={{ marginTop: "6rem", textAlign: "center", width: "100%" }}>
+                No Data 
+              </MuiTypography>
+            }
+          />
+        </ListItem>
+      )}
     </List>
   );
 }
