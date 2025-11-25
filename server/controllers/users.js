@@ -3,28 +3,33 @@ import { TryCatch } from "../middlewares/error.js";
 import { User } from "../models/users.js";
 import { ErrorHandler } from "../dotenv/utility.js";
 import { hash, compare } from "bcrypt";
+import jwt from "jsonwebtoken";
+import { UserToken } from "../models/users_token.js";
 
 const newUser = async (req, res, next) => {
   const { name, email, password } = req.body;
 
   if (!name) {
     return res.status(404).json({
-      message: "Name Not Found",
+      message: "Please enter name",
     });
   }
   if (!email) {
     return res.status(404).json({
-      message: "Email Not Found",
+      message: "Please enter email",
     });
   }
   if (!password) {
     return res.status(404).json({
-      message: "Password Not Found",
+      message: "Please enter password",
     });
   }
   const existUser = await User.findOne({ email });
 
-  if (existUser) return next(new ErrorHandler("Email exists", 504));
+  if (existUser) return res.status(208).json({
+    success: false,
+    message: 'This Email is already registered',
+  });
 
   //   const file = req.file;
 
@@ -32,7 +37,7 @@ const newUser = async (req, res, next) => {
 
   //   const avatar = {
   //     public_id: "ssd",
-  //     url: "asds",
+  //     url: "a",
   //   };
 
   const hashedPassword = await hash(password, 10);
@@ -41,9 +46,10 @@ const newUser = async (req, res, next) => {
     name,
     email,
     password: hashedPassword,
+    status: 1,
   });
 
-  sendToken(res, user, 200, "User Created");
+  sendToken(res, user, 200, "Account Created Successfully");
 };
 
 const login = TryCatch(async (req, res, next) => {
@@ -51,19 +57,45 @@ const login = TryCatch(async (req, res, next) => {
 
   const user = await User.findOne({ email });
 
-  if (!user) return next(new ErrorHandler("Invalid email", 404));
+  // if (!user) return next(new ErrorHandler("Invalid email", 404));
+  if (!email) return res.status(200).json({
+    success: false,
+    message: 'Please enter email',
+  });
+
+  if (!password) return res.status(200).json({
+    success: false,
+    message: 'Please enter password',
+  });
+
+  if (!user) return res.status(200).json({
+    success: false,
+    message: 'Email is not registered',
+  });
 
   const isMatch = await compare(password, user.password);
 
-  if (!isMatch) return next(new ErrorHandler("Invalid Password", 404));
+  // if (!isMatch) return next(new ErrorHandler("Invalid Password", 404));
+  if (!isMatch) return res.status(200).json({
+    success: false,
+    message: 'Invalid password or email',
+  });
 
-  sendToken(res, user, 200, `Welcome Back, ${user.name}`);
+  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+
+  await UserToken.create({
+    token,
+    user_id: user?._id,
+    status: 1,
+  });
+
+  sendToken(res, user, 200, `You have login successfully, ${user?.name}`, token);
 });
 
 const getMyProfile = TryCatch(async (req, res, next) => {
   const user = await User.findById(req.user);
 
-  if (!user) return next(new ErrorHandler("User not found", 404));
+  if (!user) return next(new ErrorHandler("Account not found", 404));
 
   res.status(200).json({
     success: true,
@@ -82,3 +114,4 @@ const logout = TryCatch(async (req, res) => {
 });
 
 export { login, newUser, getMyProfile, logout };
+

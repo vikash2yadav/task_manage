@@ -2,25 +2,13 @@ import mongoose, { Schema, model, Types } from "mongoose";
 
 const schema = new Schema(
   {
-    src: {
+    token: {
       type: String,
-      required: false,
+      required: true,
     },
     user_id: {
       type: Types.ObjectId,
       ref: "User",
-      required: true,
-    },
-    title: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    amount: {
-      type: String,
       required: true,
     },
     status: {
@@ -34,5 +22,5 @@ const schema = new Schema(
   }
 );
 
-export const Saving = mongoose.models.Saving || model("Saving", schema);
+export const UserToken = mongoose.models.UserToken || model("UserToken", schema);
 

@@ -6,6 +6,7 @@ import {
   getSavingById,
   updateSaving,
 } from "../controllers/savings.js";
+import { userAuth } from "../middlewares/auth.js";
 
 const app = express.Router();
 
@@ -17,6 +18,6 @@ app.delete("/delete/:id", deleteSaving);
 
 app.get("/get/:id", getSavingById);
 
-app.post("/list", getList);
+app.post("/list", userAuth, getList);
 
 export default app;

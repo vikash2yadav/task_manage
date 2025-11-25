@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { bgGradient } from "../../constants/color";
+import { purpleGradient } from "../../constants/color";
 import {
   Avatar,
   Button,
@@ -9,11 +9,12 @@ import {
   Stack,
   TextField,
   Typography,
+  Box,
+  Fade,
 } from "@mui/material";
 import CameraAlt from "@mui/icons-material/CameraAlt";
 import { VisuallyHiddenInput } from "../../components/styles/styledComponents";
 import { useFileHandler, useInputValidation } from "6pp";
-import { emailValidator } from "../../utils/validators.js";
 import { newUserApi, loginApi } from "../../apis/users.js";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -23,31 +24,42 @@ import Loader from "../../components/Loader/index.js";
 const Login = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const { loading, setLoading } = useContext(CommonContext);
 
-  const email = useInputValidation("", emailValidator);
+  const email = useInputValidation("");
   const password = useInputValidation("");
   const name = useInputValidation("");
 
   const avtar = useFileHandler("single");
 
+  const handleSwitchMode = () => {
+    // Clear validation errors when switching modes
+    setIsAnimating(true);
+    setTimeout(() => {
+      setIsLogin(!isLogin);
+      setIsAnimating(false);
+    }, 300);
+  };
+
   const handleLogin = async (emailValue, passwordValue) => {
     setLoading(true);
     try {
-        let response = await loginApi(`user/login`, {
-          email: emailValue,
-          password: passwordValue,
-        });
+      let response = await loginApi(`user/login`, {
+        email: emailValue,
+        password: passwordValue,
+      });
 
-        if (response?.status === 200) {
-          toast.success(response?.data?.message);
-          navigate("/dashboard");
-        } else {
-          toast.error(response?.data?.message);
-        }
+      if (response?.data?.success === true) {
+        localStorage.setItem("token", response?.data?.token);
+        toast.success(response?.data?.message);
+        navigate("/dashboard");
+      } else {
+        toast.error(response?.data?.message);
+      }
     } catch (error) {
-      toast.error("Registration failed!");
+      toast.error("Login failed!");
     } finally {
       setLoading(false);
     }
@@ -56,290 +68,285 @@ const Login = () => {
   const handleRegister = async (nameValue, emailValue, passwordValue) => {
     setLoading(true);
     try {
-        let response = await newUserApi(`user/new`, {
-          name: nameValue,
-          email: emailValue,
-          password: passwordValue,
-        });
+      let response = await newUserApi(`user/new`, {
+        name: nameValue,
+        email: emailValue,
+        password: passwordValue,
+      });
 
-        if (response?.status === 200) {
-          toast.success(response?.data?.message);
-            setIsLogin(true);
-        } else {
-          toast.error(response?.data);
-        }
+      if (response?.data?.success === true) {
+        toast.success(response?.data?.message);
+        setIsLogin(true);
+      } else {
+        toast.error(response?.data?.message);
+      }
     } catch (error) {
+      console.log('error', error)
       toast.error("Registration failed!");
     } finally {
       setLoading(false);
     }
   };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isLogin) {
+      handleLogin(email.value, password.value);
+    } else {
+      handleRegister(name.value, email.value, password.value);
+    }
+  };
+
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
-    <>
-      {loading ? (
-        <>
-          <Loader />
-        </>
-      ) : (
-        <div
-          style={{
-            backgroundImage: bgGradient,
+    <Box
+      sx={{
+        backgroundImage: purpleGradient,
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 2,
+      }}
+    >
+      <Container component="main" maxWidth="sm">
+        <Paper
+          elevation={8}
+          sx={{
+            padding: { xs: 3, sm: 5 },
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            background: "rgba(255, 255, 255, 0.95)",
+            backdropFilter: "blur(10px)",
+            borderRadius: "20px",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            overflow: "hidden",
+            position: "relative",
+            minHeight: isLogin ? "400px" : "600px",
+            transition: "all 0.3s ease",
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: "4px",
+              background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+            },
           }}
         >
-          <Container
-            component="main"
-            maxWidth="xs"
-            style={{
-              height: "100vh",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Paper
-              elevation={3}
-              sx={{
-                padding: 4,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                backgroundColor: "#f0f0f0",
-                borderRadius: "10px 50px",
-              }}
-            >
-              {isLogin ? (
-                <>
-                  <Typography variant="h5">Login</Typography>
-                  <form
-                    style={{
+          <Fade in={!isAnimating} timeout={300}>
+            <Box sx={{ width: "100%" }}>
+              {/* Header Section */}
+              <Box textAlign="center" mb={4}>
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  fontWeight="bold"
+                  color="primary.main"
+                  gutterBottom
+                >
+                  {isLogin ? "Login" : "Register Now"}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ opacity: 0.8 }}
+                >
+                  {isLogin
+                    ? "Sign in to continue your journey"
+                    : "Join us and get started today"}
+                </Typography>
+              </Box>
+
+              {/* Avatar for Sign Up */}
+              {!isLogin && (
+                <Stack
+                  position="relative"
+                  width="100px"
+                  height="100px"
+                  margin="auto"
+                  mb={3}
+                >
+                  <Avatar
+                    sx={{
                       width: "100%",
-                      marginTop: "1rem",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderColor: "primary.main",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                     }}
-                    onSubmit={(e) => {
-                      handleLogin(email?.value, password?.value);
-                      e.preventDefault();
+                    src={avtar?.preview}
+                  />
+                  <IconButton
+                    component="label"
+                    sx={{
+                      position: "absolute",
+                      bottom: -5,
+                      right: -5,
+                      color: "white",
+                      backgroundColor: "primary.main",
+                      "&:hover": {
+                        backgroundColor: "primary.dark",
+                        transform: "scale(1.1)",
+                      },
+                      transition: "all 0.2s ease",
+                      width: 32,
+                      height: 32,
                     }}
+                    size="small"
                   >
-                    <TextField
-                      fullWidth
-                      required
-                      label="Email"
-                      margin="normal"
-                      variant="outlined"
-                      color="secondary"
-                      value={email.value}
-                      onChange={email.changeHandler}
-                      onBlur={email.changeHandler}
-                      InputProps={{
-                        style: { borderRadius: "10px", height: "50px" },
-                      }}
-                    />
-                    {email.error && (
-                      <Typography color="error" variant="caption">
-                        {email.error}
-                      </Typography>
-                    )}
+                    <CameraAlt fontSize="small" />
+                    <VisuallyHiddenInput type="file" />
+                  </IconButton>
+                </Stack>
+              )}
+
+              {/* Form Section */}
+              <Box component="form" onSubmit={handleSubmit}>
+                <Stack spacing={3}>
+                  {/* Name Field for Sign Up */}
+                  {!isLogin && (
                     <TextField
                       required
                       fullWidth
-                      label="Password"
-                      type="password"
-                      margin="normal"
+                      label="Full Name"
                       variant="outlined"
-                      color="secondary"
-                      value={password.value}
-                      onChange={password.changeHandler}
-                      onBlur={password.changeHandler}
-                      InputProps={{
-                        style: { borderRadius: "10px", height: "50px" },
-                      }}
-                    />
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      color="secondary"
-                      type="submit"
-                      sx={{
-                        borderRadius: "10px",
-                        marginTop: "20px",
-                      }}
-                    >
-                      Continue
-                    </Button>
-                    <Typography textAlign="center" m={"1rem"}>
-                      {/* <hr /> */}
-                    </Typography>
-                    <Button
-                      sx={{ marginTop: "1rem" }}
-                      fullWidth
-                      variant="text"
-                      color="secondary"
-                      onClick={() => {
-                        setIsLogin(false);
-                      }}
-                    >
-                      Sign Up
-                    </Button>
-                  </form>
-                </>
-              ) : (
-                <>
-                  <Typography variant="h5">Sign Up</Typography>
-                  <form
-                    style={{
-                      width: "100%",
-                      marginTop: "1rem",
-                    }}
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleRegister(
-                        name?.value,
-                        email?.value,
-                        password?.value
-                      );
-                    }}
-                  >
-                    <Stack
-                      position={"relative"}
-                      width={{
-                        xs: "6rem",
-                        sm: "8rem",
-                      }}
-                      margin={"auto"}
-                    >
-                      <Avatar
-                        sx={{
-                          width: { xs: "6rem", sm: "8rem" },
-                          height: { xs: "6rem", sm: "8rem" },
-                          objectFit: "contain",
-                        }}
-                        src={avtar?.preview}
-                      />
-                      {/* {avtar.error && (
-                    <Typography
-                      m={"1rem"}
-                      width={"fit-content"}
-                      display={"block"}
-                      color="error"
-                      variant="caption"
-                    >
-                      {avtar.error}
-                    </Typography>
-                  )} */}
-                      <IconButton
-                        component="label"
-                        sx={{
-                          position: "absolute",
-                          bottom: 0,
-                          right: 0,
-                          color: "white",
-                          bgcolor: "rgba(0,0,0,0.5)",
-                          ":hover": {
-                            bgcolor: "rgba(0,0,0,0.7)",
-                          },
-                        }}
-                      >
-                        <>
-                          <CameraAlt />
-                          <VisuallyHiddenInput
-                            type="file"
-                            // onChange={}
-                          />
-                        </>
-                      </IconButton>
-                    </Stack>
-                    <TextField
-                      required
-                      fullWidth
-                      label="Name"
-                      margin="normal"
-                      variant="outlined"
-                      color="secondary"
                       value={name.value}
                       onChange={name.changeHandler}
                       onBlur={name.changeHandler}
-                      InputProps={{
-                        style: { borderRadius: "10px", height: "50px" },
-                      }}
-                    />
-                    {name.error && (
-                      <Typography color="error" variant="caption">
-                        {name.error}
-                      </Typography>
-                    )}
-                    <TextField
-                      fullWidth
-                      required
-                      label="Email"
-                      margin="normal"
-                      variant="outlined"
-                      color="secondary"
-                      value={email.value}
-                      onChange={email.changeHandler}
-                      onBlur={email.changeHandler}
-                      InputProps={{
-                        style: { borderRadius: "10px", height: "50px" },
-                      }}
-                    />
-                    {email.error && (
-                      <Typography color="error" variant="caption">
-                        {email.error}
-                      </Typography>
-                    )}
-                    <TextField
-                      required
-                      fullWidth
-                      label="Password"
-                      type="password"
-                      margin="normal"
-                      variant="outlined"
-                      color="secondary"
-                      value={password.value}
-                      onChange={password.changeHandler}
-                      onBlur={password.changeHandler}
-                      InputProps={{
-                        style: { borderRadius: "10px", height: "50px" },
-                      }}
-                    />
-                    {password.error && (
-                      <Typography color="error" variant="caption">
-                        {password.error}
-                      </Typography>
-                    )}
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      color="secondary"
-                      type="submit"
+                      error={!!name.error}
+                      helperText={name.error}
                       sx={{
-                        borderRadius: "10px",
-                        marginTop: "20px",
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "12px",
+                          backgroundColor: "white",
+                          "&:hover fieldset": {
+                            borderColor: "primary.main",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "primary.main",
+                            borderWidth: "2px",
+                          },
+                        },
                       }}
-                    >
-                      Continue
-                    </Button>
-                    <Typography textAlign="center" m={"1rem"}>
-                      {/* <hr /> */}
-                    </Typography>
-                    <Button
-                      sx={{ marginTop: "1rem" }}
-                      fullWidth
-                      variant="text"
-                      color="secondary"
-                      onClick={() => {
-                        setIsLogin(true);
-                      }}
-                    >
-                      Login
-                    </Button>
-                  </form>
-                </>
-              )}
-            </Paper>
-          </Container>
-        </div>
-      )}
-    </>
+                    />
+                  )}
+
+                  {/* Email Field */}
+                  <TextField
+                    required
+                    fullWidth
+                    type="email"
+                    label="Email Address"
+                    variant="outlined"
+                    value={email.value}
+                    onChange={email.changeHandler}
+                    onBlur={email.changeHandler}
+                    error={!!email.error}
+                    helperText={email.error}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "12px",
+                        backgroundColor: "white",
+                        "&:hover fieldset": {
+                          borderColor: "primary.main",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "primary.main",
+                          borderWidth: "2px",
+                        },
+                      },
+                    }}
+                  />
+
+                  {/* Password Field */}
+                  <TextField
+                    required
+                    fullWidth
+                    label="Password"
+                    type="password"
+                    variant="outlined"
+                    value={password.value}
+                    onChange={password.changeHandler}
+                    onBlur={password.changeHandler}
+                    error={!!password.error}
+                    helperText={password.error}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "12px",
+                        backgroundColor: "white",
+                        "&:hover fieldset": {
+                          borderColor: "primary.main",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "primary.main",
+                          borderWidth: "2px",
+                        },
+                      },
+                    }}
+                  />
+
+                  {/* Submit Button */}
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    type="submit"
+                    size="large"
+                    sx={{
+                      borderRadius: "12px",
+                      padding: "12px",
+                      fontSize: "1rem",
+                      fontWeight: "bold",
+                      textTransform: "none",
+                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 6px 20px rgba(102, 126, 234, 0.6)",
+                      },
+                      transition: "all 0.3s ease",
+                      marginTop: 1,
+                    }}
+                  >
+                    {isLogin ? "Sign In" : "Create Account"}
+                  </Button>
+                </Stack>
+              </Box>
+
+              {/* Switch Mode Section */}
+              <Box textAlign="center" mt={4}>
+                <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.8 }}>
+                  {isLogin ? "Don't have an account?" : "Already have an account?"}
+                </Typography>
+                <Button
+                  variant="text"
+                  color="primary"
+                  onClick={handleSwitchMode}
+                  disabled={isAnimating}
+                  sx={{
+                    textTransform: "none",
+                    fontSize: "1rem",
+                    fontWeight: "bold",
+                    "&:hover": {
+                      backgroundColor: "transparent",
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  {isLogin ? "Sign Up" : "Sign In"}
+                </Button>
+              </Box>
+            </Box>
+          </Fade>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 

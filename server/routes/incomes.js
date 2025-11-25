@@ -6,6 +6,7 @@ import {
   getList,
   updateIncome,
 } from "../controllers/incomes.js";
+import { userAuth } from "../middlewares/auth.js";
 
 const app = express.Router();
 
@@ -17,6 +18,6 @@ app.delete("/delete/:id", deleteIncome);
 
 app.get("/get/:id", getIncomeById);
 
-app.post("/list", getList);
+app.post("/list", userAuth, getList);
 
 export default app;

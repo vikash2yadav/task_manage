@@ -1,38 +1,95 @@
 import React from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button, Container } from "@mui/material";
 import { Link } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { purpleGradient } from "../../constants/color";
 
 const NotFound = () => {
   return (
     <Box
       sx={{
+        minHeight: "100vh",
+        background: purpleGradient,
         display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
         alignItems: "center",
-        height: "100vh", // Full viewport height
+        justifyContent: "center",
+        padding: 3,
         textAlign: "center",
-        backgroundColor: "#f5f5f5",
-        padding: "2rem",
       }}
     >
-      <Typography variant="h1" sx={{ fontSize: "5rem", fontWeight: "bold" }}>
-        404
-      </Typography>
-      <Typography variant="h5" sx={{ margin: "1rem 0" }}>
-        Page Not Found
-      </Typography>
-      <Typography variant="body1" sx={{ marginBottom: "2rem" }}>
-        Sorry, the page you are looking for does not exist.
-      </Typography>
-      {/* <Button
-        variant="contained"
-        component={Link}
-        to="/" // Adjust the path to redirect to
-        sx={{ minWidth: "10rem" }}
-      >
-        Go to Dashboard
-      </Button> */}
+      <Container maxWidth="sm">
+        <Box sx={{ color: "white" }}>
+          {/* 404 Number */}
+          <Typography
+            variant="h1"
+            sx={{
+              fontSize: { xs: "6rem", md: "8rem" },
+              fontWeight: "bold",
+              marginBottom: 1,
+              textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
+            }}
+          >
+            404
+          </Typography>
+
+          {/* Title */}
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: "bold",
+              marginBottom: 2,
+              textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
+            }}
+          >
+            Page Not Found!
+          </Typography>
+
+          {/* Description */}
+          <Typography
+            variant="h6"
+            sx={{
+              marginBottom: 4,
+              opacity: 0.9,
+              lineHeight: 1.6,
+              maxWidth: "400px",
+              margin: "0 auto 3rem",
+            }}
+          >
+            Sorry, we couldn't find the page you're looking for.
+          </Typography>
+
+          {/* Button */}
+          <Button
+            startIcon={<ArrowBackIcon />}
+            variant="outlined"
+            component={Link}
+            to="/dashboard"
+            sx={{
+              padding: "12px 40px",
+              borderRadius: "30px",
+              fontSize: "1.1rem",
+              fontWeight: "bold",
+              textTransform: "none",
+              border: "2px solid white",
+              color: "white",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.5,
+              minWidth: "160px",
+              "&:hover": {
+                backgroundColor: "white",
+                color: "#667eea",
+                transform: "translateY(-3px)",
+                boxShadow: "0 10px 25px rgba(255,255,255,0.3)",
+              },
+              transition: "all 0.3s ease",
+            }}
+          >
+            Go Back
+          </Button>
+        </Box>
+      </Container>
     </Box>
   );
 };

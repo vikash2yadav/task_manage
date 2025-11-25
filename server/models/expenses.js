@@ -6,6 +6,11 @@ const schema = new Schema(
       type: String,
       required: false,
     },
+    user_id: {
+      type: Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     title: {
       type: String,
       required: true,
@@ -16,8 +21,13 @@ const schema = new Schema(
     },
     amount: {
       type: String,
-      require: true,
+      required: true,
     },
+    status: {
+      type: Number,
+      enum: [0, 1],
+      default: 1
+    }
   },
   {
     timestamps: true,
@@ -25,3 +35,4 @@ const schema = new Schema(
 );
 
 export const Expense = mongoose.models.Expense || model("Expense", schema);
+

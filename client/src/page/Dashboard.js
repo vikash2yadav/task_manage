@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import {
   AdminPanelSettings as AdminPanelSettingsIcon,
-  Notifications as NotificationsIcon,
+  Logout as LogoutIcon,
   CurrencyRupee as CurrencyRupeeIcon,
 } from "@mui/icons-material";
 import moment from "moment";
@@ -23,6 +23,7 @@ import { SavingContext } from "../context/SavingContext";
 import Loader from "../components/Loader";
 import { useFormik } from "formik";
 import { initialValue, schemaValue } from "./Schema";
+import { useNavigate } from "react-router-dom"
 import {
   addIncomeApi,
   getIncomeByIdApi,
@@ -59,6 +60,7 @@ const Dashboard = () => {
   const { getAllIncomes } = useContext(IncomeContext);
   const { getAllSavings } = useContext(SavingContext);
   const { getAllExpenses } = useContext(ExpenseContext);
+  const navigate = useNavigate();
 
   const formik = useFormik({
     initialValues: initialValue,
@@ -170,6 +172,24 @@ const Dashboard = () => {
     }
   };
 
+  const handleLogOut = async (id) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "Are you want to logout?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Logout",
+    });
+
+    if (result.isConfirmed) {
+      localStorage.removeItem('token');
+      toast.success('You have been logout successfully');
+      navigate('/');
+    }
+  };
+
   const callApi = async () => {
     setLoading(true);
     try {
@@ -189,6 +209,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     callApi();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, setType]);
 
   const Appbar = (
@@ -208,7 +229,7 @@ const Dashboard = () => {
           {" "}
           {moment().format("MMMM Do YYYY")}{" "}
         </Typography>
-        <NotificationsIcon />
+        <LogoutIcon onClick={handleLogOut} sx={{ cursor: 'pointer' }} />
       </Stack>
     </Paper>
   );
@@ -284,14 +305,14 @@ const Dashboard = () => {
                       ? "Update Income"
                       : "Add Income"
                     : type === "savings"
-                    ? isFormEdit
-                      ? "Update Saving"
-                      : "Add Saving"
-                    : type === "expenses"
-                    ? isFormEdit
-                      ? "Update Expense"
-                      : "Add Expense"
-                    : "Add"}
+                      ? isFormEdit
+                        ? "Update Saving"
+                        : "Add Saving"
+                      : type === "expenses"
+                        ? isFormEdit
+                          ? "Update Expense"
+                          : "Add Expense"
+                        : "Add"}
                 </Typography>
 
                 <form onSubmit={formik.handleSubmit}>
@@ -423,10 +444,10 @@ const Dashboard = () => {
                 {type === "incomes"
                   ? "Incomes"
                   : type === "savings"
-                  ? "Savings"
-                  : type === "expenses"
-                  ? "Expenses"
-                  : ""}
+                    ? "Savings"
+                    : type === "expenses"
+                      ? "Expenses"
+                      : ""}
                 <Button
                   variant="contained"
                   sx={{ minWidth: "6rem", borderRadius: "1rem" }}
