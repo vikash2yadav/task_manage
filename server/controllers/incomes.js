@@ -1,12 +1,14 @@
 import { Income } from "../models/incomes.js";
 
 const addIncome = async (req, res, next) => {
-  const { title, description, amount } = req?.body;
+  const { title, description, amount, user_id, date } = req?.body;
 
   let income = await Income.create({
     title,
     description,
     amount,
+    user_id,
+    createdAt: date,
   });
 
   res.status(200).json({
@@ -17,12 +19,12 @@ const addIncome = async (req, res, next) => {
 };
 
 const updateIncome = async (req, res, next) => {
-  const { _id, title, description, amount } = req.body;
+  const { _id, title, description, amount, date } = req.body;
 
   try {
     const updatedIncome = await Income.findByIdAndUpdate(
       _id,
-      { title, description, amount },
+      { title, description, amount, createdAt: date, },
       { new: true, runValidators: true }
     );
 
@@ -78,9 +80,7 @@ const getIncomeById = async (req, res, next) => {
 };
 
 const getList = async (req, res, next) => {
-  const { id } = req?.params;
-
-  const income = await Income.find();
+  const income = await Income.find({ user_id: req.user._id });
 
   res.status(200).json({
     success: true,

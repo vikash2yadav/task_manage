@@ -19,3 +19,7 @@ export const getExpenseByIdApi = async (url, body) => {
 export const getExpenseApi = async (url, body) => {
   return await callApi(url, body, "POST");
 };
+
+export const getCountApi = async (url, body) => {
+  return await callApi(url, body, "GET");
+};

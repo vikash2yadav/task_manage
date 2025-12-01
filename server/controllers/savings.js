@@ -1,12 +1,13 @@
 import { Saving } from "../models/savings.js";
 
 const addSaving = async (req, res, next) => {
-  const { title, description, amount } = req?.body;
+  const { title, description, amount, user_id, } = req?.body;
 
   let saving = await Saving.create({
     title,
     description,
     amount,
+    user_id,
   });
 
   res.status(200).json({
@@ -78,7 +79,7 @@ const getSavingById = async (req, res, next) => {
 };
 
 const getList = async (req, res, next) => {
-  const saving = await Saving.find();
+  const saving = await Saving.find({ user_id: req.user._id });
 
   res.status(200).json({
     success: true,

@@ -1,12 +1,14 @@
 import { Expense } from "../models/expenses.js";
 
 const addExpense = async (req, res, next) => {
-  const { title, description, amount } = req?.body;
+  const { title, description, amount, user_id, date } = req?.body;
 
   let expense = await Expense.create({
     title,
     description,
     amount,
+    user_id,
+    createdAt: date,
   });
 
   res.status(200).json({
@@ -17,12 +19,12 @@ const addExpense = async (req, res, next) => {
 };
 
 const updateExpense = async (req, res, next) => {
-  const { _id, title, description, amount } = req.body;
+  const { _id, title, description, amount, date } = req.body;
 
   try {
     const updatedExpense = await Expense.findByIdAndUpdate(
       _id,
-      { title, description, amount },
+      { title, description, amount, createdAt: date, },
       { new: true, runValidators: true }
     );
 
@@ -78,7 +80,7 @@ const getExpenseById = async (req, res, next) => {
 };
 
 const getList = async (req, res, next) => {
-  const expense = await Expense.find();
+  const expense = await Expense.find({ user_id: req.user._id });
 
   res.status(200).json({
     success: true,

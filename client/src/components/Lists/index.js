@@ -3,8 +3,6 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Divider from "@mui/material/Divider";
 import ListItemText from "@mui/material/ListItemText";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import Avatar from "@mui/material/Avatar";
 import Typography from "@mui/material/Typography";
 import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
 import IconButton from "@mui/material/IconButton";
@@ -22,9 +20,6 @@ export default function Lists({ data, handleEditOpen, handleDelete }) {
         data.map((item) => (
           <React.Fragment key={item.id}>
             <ListItem alignItems="flex-start" sx={{ padding: "16px" }}>
-              <ListItemAvatar>
-                <Avatar alt="Data" src={item?.src} />
-              </ListItemAvatar>
               <ListItemText
                 primary={
                   <Typography

@@ -10,13 +10,13 @@ import { userAuth } from "../middlewares/auth.js";
 
 const app = express.Router();
 
-app.post("/add", addSaving);
+app.post("/add", userAuth, addSaving);
 
-app.put("/update", updateSaving);
+app.put("/update", userAuth, updateSaving);
 
-app.delete("/delete/:id", deleteSaving);
+app.delete("/delete/:id", userAuth, deleteSaving);
 
-app.get("/get/:id", getSavingById);
+app.get("/get/:id", userAuth, getSavingById);
 
 app.post("/list", userAuth, getList);
 

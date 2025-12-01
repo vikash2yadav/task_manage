@@ -1,21 +1,21 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { purpleGradient } from "../../constants/color";
 import {
-  Avatar,
   Button,
   Container,
-  IconButton,
   Paper,
   Stack,
   TextField,
   Typography,
   Box,
   Fade,
+  Alert,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
-import CameraAlt from "@mui/icons-material/CameraAlt";
-import { VisuallyHiddenInput } from "../../components/styles/styledComponents";
-import { useFileHandler, useInputValidation } from "6pp";
-import { newUserApi, loginApi } from "../../apis/users.js";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useInputValidation } from "6pp";
+import { newUserApi, loginApi, sendOtpApi } from "../../apis/users.js";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { CommonContext } from "../../context/CommonContext.js";
@@ -25,6 +25,15 @@ const Login = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
+  
+  // State for Password Visibility
+  const [showPassword, setShowPassword] = useState(false);
+
+  // OTP States
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [countdown, setCountdown] = useState(0);
 
   const { loading, setLoading } = useContext(CommonContext);
 
@@ -32,10 +41,17 @@ const Login = () => {
   const password = useInputValidation("");
   const name = useInputValidation("");
 
-  const avtar = useFileHandler("single");
+  // Function to toggle password visibility
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
 
   const handleSwitchMode = () => {
-    // Clear validation errors when switching modes
+    setOtpSent(false);
+    setOtpVerified(false);
+    setOtp("");
+    setCountdown(0);
+    localStorage.removeItem("otp");
+    setShowPassword(false); // Reset password visibility on switch
+
     setIsAnimating(true);
     setTimeout(() => {
       setIsLogin(!isLogin);
@@ -43,8 +59,18 @@ const Login = () => {
     }, 300);
   };
 
+  useEffect(() => {
+    let timer;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
+
   const handleLogin = async (emailValue, passwordValue) => {
-    setLoading(true);
+    setLoading(true); // Start loader
     try {
       let response = await loginApi(`user/login`, {
         email: emailValue,
@@ -53,6 +79,7 @@ const Login = () => {
 
       if (response?.data?.success === true) {
         localStorage.setItem("token", response?.data?.token);
+        localStorage.setItem("user", JSON.stringify(response?.data?.user));
         toast.success(response?.data?.message);
         navigate("/dashboard");
       } else {
@@ -61,30 +88,121 @@ const Login = () => {
     } catch (error) {
       toast.error("Login failed!");
     } finally {
-      setLoading(false);
+      setLoading(false); // Stop loader
     }
   };
 
-  const handleRegister = async (nameValue, emailValue, passwordValue) => {
-    setLoading(true);
+  const handleSendOtp = async () => {
+    if (!name.value || !email.value || !password.value) {
+      toast.error("Please fill all fields before sending OTP");
+      return;
+    }
+
+    setLoading(true); // Start loader
+    try {
+      let response = await sendOtpApi(`user/sent/otp`, {
+        email: email.value,
+        name: name.value,
+      });
+
+      if (response?.data?.success === true) {
+        setOtpSent(true);
+        localStorage.setItem("otp", response?.data?.data);
+        
+        toast.success("OTP sent to your email!");
+        setCountdown(60); 
+      } else {
+        toast.error(response?.data?.message || "Failed to send OTP");
+      }
+    } catch (error) {
+      console.log('error', error);
+      toast.error("Failed to send OTP!");
+    } finally {
+      setLoading(false); // Stop loader
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    if (!otp) {
+      toast.error("Please enter OTP");
+      return;
+    }
+
+    const storeOtp = localStorage.getItem('otp');
+    
+    if (String(otp).trim() === String(storeOtp).trim()) {
+      setOtpVerified(true);
+      toast.success("OTP verified! Click Create Account to finish.");
+    } else {
+      toast.error("Invalid OTP. Please try again.");
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!otpVerified) {
+      toast.error("Please verify OTP first");
+      return;
+    }
+
+    setLoading(true); // Start loader
     try {
       let response = await newUserApi(`user/new`, {
-        name: nameValue,
-        email: emailValue,
-        password: passwordValue,
+        name: name.value,
+        email: email.value,
+        password: password.value,
+        otp: otp,
       });
 
       if (response?.data?.success === true) {
         toast.success(response?.data?.message);
-        setIsLogin(true);
+
+        localStorage.removeItem("otp");
+        setOtpSent(false);
+        setOtpVerified(false);
+        setOtp("");
+
+        if (response?.data?.token) {
+           localStorage.setItem("token", response.data.token);
+           localStorage.setItem("user", JSON.stringify(response.data.user));
+           navigate("/dashboard");
+        } else {
+           toast.success("Please login with your credentials.");
+           setIsLogin(true);
+        }
+
       } else {
-        toast.error(response?.data?.message);
+        toast.error(response?.data?.message || 'Something Went Wrong.');
       }
     } catch (error) {
-      console.log('error', error)
+      console.log('error', error);
       toast.error("Registration failed!");
     } finally {
-      setLoading(false);
+      setLoading(false); // Stop loader
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (countdown > 0) return;
+
+    setLoading(true); // Start loader
+    try {
+      let response = await sendOtpApi(`user/sent/otp`, {
+        email: email.value,
+        name: name.value,
+      });
+
+      if (response?.data?.success === true) {
+        localStorage.setItem("otp", response?.data?.data);
+        toast.success("OTP resent to your email!");
+        setCountdown(60);
+      } else {
+        toast.error(response?.data?.message || "Failed to resend OTP");
+      }
+    } catch (error) {
+      console.log('error', error);
+      toast.error("Failed to resend OTP!");
+    } finally {
+      setLoading(false); // Stop loader
     }
   };
 
@@ -93,7 +211,13 @@ const Login = () => {
     if (isLogin) {
       handleLogin(email.value, password.value);
     } else {
-      handleRegister(name.value, email.value, password.value);
+      if (!otpSent) {
+        handleSendOtp();
+      } else if (otpSent && !otpVerified) {
+        handleVerifyOtp();
+      } else if (otpVerified) {
+        handleRegister();
+      }
     }
   };
 
@@ -127,7 +251,7 @@ const Login = () => {
             border: "1px solid rgba(255, 255, 255, 0.2)",
             overflow: "hidden",
             position: "relative",
-            minHeight: isLogin ? "400px" : "600px",
+            minHeight: isLogin ? "400px" : otpSent ? "550px" : "500px",
             transition: "all 0.3s ease",
             "&::before": {
               content: '""',
@@ -164,53 +288,24 @@ const Login = () => {
                 </Typography>
               </Box>
 
-              {/* Avatar for Sign Up */}
-              {!isLogin && (
-                <Stack
-                  position="relative"
-                  width="100px"
-                  height="100px"
-                  margin="auto"
-                  mb={3}
+              {/* OTP Status Alert */}
+              {!isLogin && otpSent && (
+                <Alert
+                  severity={otpVerified ? "success" : "info"}
+                  sx={{ mb: 3, borderRadius: 2 }}
                 >
-                  <Avatar
-                    sx={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      borderColor: "primary.main",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                    }}
-                    src={avtar?.preview}
-                  />
-                  <IconButton
-                    component="label"
-                    sx={{
-                      position: "absolute",
-                      bottom: -5,
-                      right: -5,
-                      color: "white",
-                      backgroundColor: "primary.main",
-                      "&:hover": {
-                        backgroundColor: "primary.dark",
-                        transform: "scale(1.1)",
-                      },
-                      transition: "all 0.2s ease",
-                      width: 32,
-                      height: 32,
-                    }}
-                    size="small"
-                  >
-                    <CameraAlt fontSize="small" />
-                    <VisuallyHiddenInput type="file" />
-                  </IconButton>
-                </Stack>
+                  {otpVerified
+                    ? "OTP Verified! Click 'Create Account' to finish."
+                    : `OTP sent to ${email.value}. Please verify.`
+                  }
+                </Alert>
               )}
 
               {/* Form Section */}
               <Box component="form" onSubmit={handleSubmit}>
                 <Stack spacing={3}>
-                  {/* Name Field for Sign Up */}
+                  
+                  {/* Name Field */}
                   {!isLogin && (
                     <TextField
                       required
@@ -219,22 +314,8 @@ const Login = () => {
                       variant="outlined"
                       value={name.value}
                       onChange={name.changeHandler}
-                      onBlur={name.changeHandler}
-                      error={!!name.error}
-                      helperText={name.error}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "12px",
-                          backgroundColor: "white",
-                          "&:hover fieldset": {
-                            borderColor: "primary.main",
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "primary.main",
-                            borderWidth: "2px",
-                          },
-                        },
-                      }}
+                      disabled={otpSent} 
+                      sx={textFieldStyle}
                     />
                   )}
 
@@ -247,50 +328,85 @@ const Login = () => {
                     variant="outlined"
                     value={email.value}
                     onChange={email.changeHandler}
-                    onBlur={email.changeHandler}
-                    error={!!email.error}
-                    helperText={email.error}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "12px",
-                        backgroundColor: "white",
-                        "&:hover fieldset": {
-                          borderColor: "primary.main",
-                        },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "primary.main",
-                          borderWidth: "2px",
-                        },
-                      },
-                    }}
+                    disabled={(!isLogin && otpSent)}
+                    sx={textFieldStyle}
                   />
 
-                  {/* Password Field */}
+                  {/* Password Field (Updated with Show/Hide Logic) */}
                   <TextField
                     required
                     fullWidth
                     label="Password"
-                    type="password"
+                    type={showPassword ? "text" : "password"} // Dynamic Type
                     variant="outlined"
                     value={password.value}
                     onChange={password.changeHandler}
-                    onBlur={password.changeHandler}
-                    error={!!password.error}
-                    helperText={password.error}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "12px",
-                        backgroundColor: "white",
-                        "&:hover fieldset": {
-                          borderColor: "primary.main",
-                        },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "primary.main",
-                          borderWidth: "2px",
-                        },
-                      },
+                    disabled={(!isLogin && otpSent)}
+                    sx={textFieldStyle}
+                    InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={handleClickShowPassword}
+                              edge="end"
+                            >
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
                     }}
                   />
+
+                  {/* Change Password Button */}
+                  {isLogin && (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-12px' }}>
+                        <Button
+                            variant="text"
+                            size="small"
+                            onClick={() => navigate("/change-password")}
+                            sx={{
+                                textTransform: "none",
+                                fontWeight: 600,
+                                fontSize: "0.875rem",
+                                color: "primary.main",
+                                minWidth: 0,
+                                padding: 0,
+                                "&:hover": {
+                                    backgroundColor: "transparent",
+                                    textDecoration: "underline"
+                                }
+                            }}
+                        >
+                            Change Password?
+                        </Button>
+                    </Box>
+                  )}
+
+                  {/* OTP Field */}
+                  {!isLogin && otpSent && !otpVerified && (
+                    <Stack spacing={1}>
+                       <TextField
+                        required
+                        fullWidth
+                        label="Enter OTP"
+                        variant="outlined"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        sx={textFieldStyle}
+                      />
+                       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button 
+                          onClick={handleResendOtp} 
+                          disabled={countdown > 0}
+                          size="small"
+                          sx={{ textTransform: 'none' }}
+                        >
+                          {countdown > 0 ? `Resend in ${countdown}s` : "Resend OTP"}
+                        </Button>
+                      </Box>
+                    </Stack>
+                  )}
 
                   {/* Submit Button */}
                   <Button
@@ -298,6 +414,7 @@ const Login = () => {
                     variant="contained"
                     type="submit"
                     size="large"
+                    disabled={loading} // Disable button when loading
                     sx={{
                       borderRadius: "12px",
                       padding: "12px",
@@ -310,25 +427,41 @@ const Login = () => {
                         transform: "translateY(-2px)",
                         boxShadow: "0 6px 20px rgba(102, 126, 234, 0.6)",
                       },
+                      "&:disabled": {
+                        background: "grey",
+                        transform: "none",
+                        boxShadow: "none",
+                      },
                       transition: "all 0.3s ease",
                       marginTop: 1,
                     }}
                   >
-                    {isLogin ? "Sign In" : "Create Account"}
+                    {isLogin
+                      ? "Sign In"
+                      : !otpSent
+                        ? "Send OTP"
+                        : otpVerified
+                          ? "Create Account"
+                          : "Verify OTP"
+                    }
                   </Button>
                 </Stack>
               </Box>
 
               {/* Switch Mode Section */}
               <Box textAlign="center" mt={4}>
-                <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.8 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ opacity: 0.8 }}
+                >
                   {isLogin ? "Don't have an account?" : "Already have an account?"}
                 </Typography>
                 <Button
                   variant="text"
                   color="primary"
                   onClick={handleSwitchMode}
-                  disabled={isAnimating}
+                  disabled={isAnimating || loading} // Disable during loading
                   sx={{
                     textTransform: "none",
                     fontSize: "1rem",
@@ -336,6 +469,9 @@ const Login = () => {
                     "&:hover": {
                       backgroundColor: "transparent",
                       textDecoration: "underline",
+                    },
+                    "&:disabled": {
+                      color: "grey",
                     },
                   }}
                 >
@@ -348,6 +484,20 @@ const Login = () => {
       </Container>
     </Box>
   );
+};
+
+const textFieldStyle = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "12px",
+    backgroundColor: "white",
+    "&:hover fieldset": {
+      borderColor: "primary.main",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "primary.main",
+      borderWidth: "2px",
+    },
+  },
 };
 
 export default Login;
