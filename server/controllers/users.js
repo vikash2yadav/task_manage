@@ -151,7 +151,7 @@ const sentOtp = TryCatch(async (req, res) => {
   return res.status(200).json({
     success: true,
     data: otp,
-    message: "Otp sent succesfully",
+    message: "Otp sent succesfully ...........",
   });;
 });
 
